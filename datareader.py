@@ -102,10 +102,16 @@ class YcbineoatReader:
     except:
       logging.info("GT pose not found, return None")
       return None
+    
+  def get_color_raw(self, i):
+    return imageio.imread(self.color_files[i])[...,:3]
+  
+  def get_depth_raw(self, i):
+    return cv2.imread(self.color_files[i].replace('rgb','depth'),-1)/1e3
 
 
   def get_color(self,i):
-    color = imageio.imread(self.color_files[i])[...,:3]
+    color = self.get_color_raw(i)
     color = cv2.resize(color, (self.W,self.H), interpolation=cv2.INTER_NEAREST)
     return color
 
@@ -120,7 +126,7 @@ class YcbineoatReader:
     return mask
 
   def get_depth(self,i):
-    depth = cv2.imread(self.color_files[i].replace('rgb','depth'),-1)/1e3
+    depth = self.get_depth_raw(i)
     depth = cv2.resize(depth, (self.W,self.H), interpolation=cv2.INTER_NEAREST)
     depth[(depth<0.1) | (depth>=self.zfar)] = 0
     return depth
