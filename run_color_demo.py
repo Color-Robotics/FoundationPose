@@ -157,7 +157,7 @@ class FoundationPoseStream:
 # )
 
 
-@app.pose("/pancake_box/inference")
+@app.post("/pancake_box/inference")
 def pose_inference(data: ImageData):
     try:
         # Decode the base64 string to bytes
