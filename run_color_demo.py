@@ -151,8 +151,8 @@ class FoundationPoseStream:
 # TODO: How to handle different objects easily?  CLI args?
 # TODO: Fix this path.
 PANCAKE_BOX_DETECTOR = FoundationPoseStream(
-    f"{CODE_DIR}/demo_data/mustard0/mesh/textured_simple.obj",
-    f"{CODE_DIR}/demo_data/mustard0/cam_K.txt",
+    f"{CODE_DIR}/../data/rubiks_cube/mesh/cube.obj",
+    f"{CODE_DIR}/../data/rubiks_cube/cam_K.txt",
 )
 
 
