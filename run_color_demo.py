@@ -10,6 +10,7 @@ import os
 import argparse
 import logging
 import base64
+import glob
 from typing import Optional
 
 import trimesh
@@ -51,9 +52,11 @@ class ImageData(pydantic.BaseModel):
 class FoundationPoseStream:
     """Class to handle pose estimation for a stream of images."""
 
-    def __init__(self, mesh_file: str, cam_k_file: str):
+    def __init__(self, mesh_file: str, cam_k_file: str, mask_0: Optional[np.ndarray] = None):
         """Initialize the pose estimation pipeline."""
         self.mesh_file = mesh_file
+        self.K = np.loadtxt(cam_k_file).reshape(3, 3)
+        self.mask_0 = mask_0
         debug_dir = f"{CODE_DIR}/debug"
         debug = 1
         # TODO: Do this better.
@@ -97,8 +100,6 @@ class FoundationPoseStream:
         self.est_refine_iter = 5
         self.track_refine_iter = 2
 
-        self.K = np.loadtxt(cam_k_file).reshape(3, 3)
-
     def process_color_data(self, color: np.ndarray):
         color = cv2.resize(color, (self.W, self.H), interpolation=cv2.INTER_NEAREST)
         return color
@@ -115,10 +116,10 @@ class FoundationPoseStream:
     def get_mask(self, rgb: np.ndarray):
         """Get a mask for the object in the image."""
         # HACK
-        # Return a mask of the middle 50% of the image
-        mask = np.zeros_like(rgb)
-        mask[:, self.W // 4 : 3 * self.W // 4] = 1
-        return mask
+        if self.mask_0:
+            return self.mask_0
+        else:
+            raise ValueError("No mask available to return.")
 
     def detect(self, image_data, depth_data) -> Optional[np.ndarray]:
         logging.info(f"Processing image: {self.image_counter}")
@@ -150,10 +151,10 @@ class FoundationPoseStream:
 
 # TODO: How to handle different objects easily?  CLI args?
 # TODO: Fix this path.
-PANCAKE_BOX_DETECTOR = FoundationPoseStream(
-    f"{CODE_DIR}/../data/rubiks_cube/mesh/cube.obj",
-    f"{CODE_DIR}/../data/rubiks_cube/cam_K.txt",
-)
+# PANCAKE_BOX_DETECTOR = FoundationPoseStream(
+#     f"{CODE_DIR}/../data/rubiks_cube/mesh/cube.obj",
+#     f"{CODE_DIR}/../data/rubiks_cube/cam_K.txt",
+# )
 
 
 @app.pose("/pancake_box/inference")
@@ -163,7 +164,7 @@ def pose_inference(data: ImageData):
         image_data = base64.b64decode(data.image_base64)
         depth_data = base64.b64decode(data.depth_base64)
         # process the image
-        PANCAKE_BOX_DETECTOR.detect(image_data, depth_data)
+        # PANCAKE_BOX_DETECTOR.detect(image_data, depth_data)
 
         return {"message": "Image processed successfully"}
     except Exception as e:
@@ -189,10 +190,13 @@ def main() -> None:
     parser.add_argument("--track_refine_iter", type=int, default=2)
     parser.add_argument("--debug", type=int, default=1)
     parser.add_argument("--debug_dir", type=str, default=f"{code_dir}/debug")
-    parser.add_argument("--cam_k_file", type=str, default=f"{code_dir}/demo_data/mustard0/cam_K.txt")
+    parser.add_argument("--cam_k_file", type=str, default="")
     args = parser.parse_args()
 
-    foundation_pose_stream = FoundationPoseStream(args.mesh_file, args.cam_k_file)
+    if args.cam_k_file == "":
+        args.cam_k_file = f"{args.test_scene_dir}/cam_K.txt"
+    mask_0 = glob.glob(f"{args.test_scene_dir}/masks/*.png")[0]
+    foundation_pose_stream = FoundationPoseStream(args.mesh_file, args.cam_k_file, mask_0)
     logging.info("estimator initialization done")
 
     reader = datareader.YcbineoatReader(
