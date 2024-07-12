@@ -38,8 +38,8 @@ class RGBDData(pydantic.BaseModel):
 @app.post("/rubikscube/inference")
 def pose_inference(data: RGBDData):
     try:
-        image_data = np.array(data.rgb)
-        depth_data = np.array(data.depth)
+        image_data = np.array(data.rgb, dtype=np.uint8)
+        depth_data = np.array(data.depth, dtype=np.uint8)
         # process the image
         pose = RUBIKS_CUBE_DETECTOR.detect(image_data, depth_data)
 

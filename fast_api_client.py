@@ -4,22 +4,23 @@ import os
 import base64
 import io
 import requests
+from typing import List
 
 from PIL import Image
 import numpy as np
 
 
-def encode_image_to_bytes(image_fn):
+def encode_image_to_list(image_fn):
     # Encode the image to bytes using np.array().tobytes()
     image = np.array(Image.open(image_fn))
-    return image.tobytes()
+    return image.tolist()
 
 
-def send_image_to_endpoint(rgb: np.ndarray, depth: np.ndarray):
+def send_image_to_endpoint(rgb: List, depth: List):
     # Assume a tunnel is built to the FastAPI server.
     url = "http://127.0.0.1:8000/rubikscube/inference"
     headers = {"Content-Type": "application/json"}
-    data = {"image_base64": rgb.tolist(), "depth_base64": depth.tolsit()}
+    data = {"rgb": rgb, "depth": depth}
     response = requests.post(url, json=data, headers=headers)
     return response
 
@@ -37,8 +38,8 @@ def main():
         import pdb
 
         pdb.set_trace()
-        rgb = encode_image_to_bytes(rgb_image)
-        depth = encode_image_to_bytes(depth_image)
+        rgb = encode_image_to_list(rgb_image)
+        depth = encode_image_to_list(depth_image)
         response = send_image_to_endpoint(rgb, depth)
         # Should get back a pose (3x3 matrix)
         print(f"For image {rgb_image}, pose: {response.json()}")
