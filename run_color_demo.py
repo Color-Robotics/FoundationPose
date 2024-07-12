@@ -34,7 +34,10 @@ class FoundationPoseStream:
     """Class to handle pose estimation for a stream of images."""
 
     def __init__(
-        self, mesh_file: str, cam_k_file: str, mask_0: Optional[np.ndarray] = None
+        self,
+        mesh_file: str,
+        cam_k_file: str,
+        mask_0: Optional[np.ndarray] = None,
     ):
         """Initialize the pose estimation pipeline."""
         self.mesh_file = mesh_file
