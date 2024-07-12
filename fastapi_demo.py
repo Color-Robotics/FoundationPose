@@ -4,6 +4,7 @@ import fastapi
 from fastapi import HTTPException
 from fastapi.responses import HTMLResponse
 import pydantic
+import numpy as np
 
 from run_color_demo import FoundationPoseStream
 import run_color_demo
@@ -27,19 +28,18 @@ RUBIKS_CUBE_DETECTOR = FoundationPoseStream(
 )
 
 
-class ImageData(pydantic.BaseModel):
+class RGBDData(pydantic.BaseModel):
     """Message schema for sending data for inference."""
 
-    image_base64: str
-    depth_base64: str
+    rgb: list
+    depth: list
 
 
 @app.post("/rubikscube/inference")
-def pose_inference(data: ImageData):
+def pose_inference(data: RGBDData):
     try:
-        # Decode the base64 string to bytes
-        image_data = base64.b64decode(data.image_base64)
-        depth_data = base64.b64decode(data.depth_base64)
+        image_data = np.array(data.rgb)
+        depth_data = np.array(data.depth)
         # process the image
         pose = RUBIKS_CUBE_DETECTOR.detect(image_data, depth_data)
 
