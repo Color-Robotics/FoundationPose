@@ -9,7 +9,6 @@
 import os
 import argparse
 import logging
-import base64
 import glob
 from typing import Optional
 
@@ -19,10 +18,6 @@ import nvdiffrast.torch as dr
 import cv2
 import imageio
 import open3d as o3d
-import fastapi
-from fastapi import HTTPException
-from fastapi.responses import HTMLResponse
-import pydantic
 
 
 import estimater
@@ -32,27 +27,15 @@ import datareader
 import Utils
 
 
-# Using fastapi create a web server
-# There should be a route for each object to detect.
-# Would be cool if you could post to setup the route and then get back the new route to post the images to.
-# If you post an image, you get back the pose of the object if it exists.
-# Add an arg to say "reset" the tracker so that we start pushing things through an mask model again.
-app = fastapi.FastAPI()
-
 CODE_DIR = os.path.dirname(os.path.realpath(__file__))
-
-
-class ImageData(pydantic.BaseModel):
-    """Message schema for sending data for inference."""
-
-    image_base64: str
-    depth_base64: str
 
 
 class FoundationPoseStream:
     """Class to handle pose estimation for a stream of images."""
 
-    def __init__(self, mesh_file: str, cam_k_file: str, mask_0: Optional[np.ndarray] = None):
+    def __init__(
+        self, mesh_file: str, cam_k_file: str, mask_0: Optional[np.ndarray] = None
+    ):
         """Initialize the pose estimation pipeline."""
         self.mesh_file = mesh_file
         self.K = np.loadtxt(cam_k_file).reshape(3, 3)
@@ -149,30 +132,6 @@ class FoundationPoseStream:
         return pose
 
 
-# TODO: How to handle different objects easily?  CLI args?
-# TODO: Fix this path.
-RUBIKS_CUBE_DETECTOR = FoundationPoseStream(
-    f"{CODE_DIR}/../data/rubikscube/mesh/rubiks_cube_scaled.obj",
-    f"{CODE_DIR}/../data/rubikscube/cam_K.txt",
-)
-
-
-@app.post("/rubikscube/inference")
-def pose_inference(data: ImageData):
-    try:
-        # Decode the base64 string to bytes
-        image_data = base64.b64decode(data.image_base64)
-        depth_data = base64.b64decode(data.depth_base64)
-        # process the image
-        RUBIKS_CUBE_DETECTOR.detect(image_data, depth_data)
-
-        return {"message": "Image processed successfully"}
-    except Exception as e:
-        raise HTTPException(
-            status_code=400, detail=f"Failed to process capture: {str(e)}"
-        )
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
     code_dir = os.path.dirname(os.path.realpath(__file__))
@@ -196,7 +155,9 @@ def main() -> None:
     if args.cam_k_file == "":
         args.cam_k_file = f"{args.test_scene_dir}/cam_K.txt"
     mask_0 = glob.glob(f"{args.test_scene_dir}/masks/*.png")[0]
-    foundation_pose_stream = FoundationPoseStream(args.mesh_file, args.cam_k_file, mask_0)
+    foundation_pose_stream = FoundationPoseStream(
+        args.mesh_file, args.cam_k_file, mask_0
+    )
     logging.info("estimator initialization done")
 
     reader = datareader.YcbineoatReader(
