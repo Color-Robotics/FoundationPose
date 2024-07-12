@@ -151,20 +151,20 @@ class FoundationPoseStream:
 
 # TODO: How to handle different objects easily?  CLI args?
 # TODO: Fix this path.
-# PANCAKE_BOX_DETECTOR = FoundationPoseStream(
-#     f"{CODE_DIR}/../data/rubiks_cube/mesh/cube.obj",
-#     f"{CODE_DIR}/../data/rubiks_cube/cam_K.txt",
-# )
+RUBIKS_CUBE_DETECTOR = FoundationPoseStream(
+    f"{CODE_DIR}/../data/rubikscube/mesh/rubiks_cube_scaled.obj",
+    f"{CODE_DIR}/../data/rubikscube/cam_K.txt",
+)
 
 
-@app.post("/pancake_box/inference")
+@app.post("/rubikscube/inference")
 def pose_inference(data: ImageData):
     try:
         # Decode the base64 string to bytes
         image_data = base64.b64decode(data.image_base64)
         depth_data = base64.b64decode(data.depth_base64)
         # process the image
-        # PANCAKE_BOX_DETECTOR.detect(image_data, depth_data)
+        RUBIKS_CUBE_DETECTOR.detect(image_data, depth_data)
 
         return {"message": "Image processed successfully"}
     except Exception as e:
@@ -234,8 +234,6 @@ def main() -> None:
                 transparency=0,
                 is_input_rgb=True,
             )
-            cv2.imshow("1", vis[..., ::-1])
-            cv2.waitKey(1)
 
         if debug >= 2:
             os.makedirs(f"{debug_dir}/track_vis", exist_ok=True)
