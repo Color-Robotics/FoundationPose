@@ -37,12 +37,17 @@ class FoundationPoseStream:
         self,
         mesh_file: str,
         cam_k_file: str,
-        mask_0: Optional[np.ndarray] = None,
+        mask_0_file: Optional[str] = None,
     ):
         """Initialize the pose estimation pipeline."""
         self.mesh_file = mesh_file
         self.K = np.loadtxt(cam_k_file).reshape(3, 3)
-        self.mask_0 = mask_0
+
+        if mask_0_file:
+            # There is some code for processing the masks maybe related to RGB masks.
+            self.mask_0 = cv2.imread(self.mask_0, cv2.IMREAD_UNCHANGED)
+        else:
+            self.mask_0 = None
         debug_dir = f"{CODE_DIR}/debug"
         debug = 1
         # TODO: Do this better.
