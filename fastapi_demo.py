@@ -46,7 +46,7 @@ def pose_inference(data: RGBDData):
         return {"pose": pose.tolist()}
     except Exception as e:
         import logging
-        logging.warning("Failure", stack_info=True)
+        logging.exception("Failure")
         raise HTTPException(
             status_code=400, detail=f"Failed to process capture: {str(e)}"
         )
