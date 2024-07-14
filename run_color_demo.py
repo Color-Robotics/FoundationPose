@@ -107,7 +107,7 @@ class FoundationPoseStream:
     def get_mask(self, rgb: np.ndarray):
         """Get a mask for the object in the image."""
         # HACK
-        if self.mask_0:
+        if self.mask_0 is not None:
             return self.mask_0
         else:
             raise ValueError("No mask available to return.")
