@@ -45,7 +45,7 @@ class FoundationPoseStream:
 
         if mask_0_file:
             # There is some code for processing the masks maybe related to RGB masks.
-            self.mask_0 = cv2.imread(self.mask_0, cv2.IMREAD_UNCHANGED)
+            self.mask_0 = cv2.imread(mask_0_file, cv2.IMREAD_UNCHANGED)
         else:
             self.mask_0 = None
         debug_dir = f"{CODE_DIR}/debug"
