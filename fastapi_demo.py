@@ -24,7 +24,7 @@ app = fastapi.FastAPI()
 RUBIKS_CUBE_DETECTOR = FoundationPoseStream(
     f"{CODE_DIR}/../data/rubikscube/mesh/rubiks_cube_scaled.obj",
     f"{CODE_DIR}/../data/rubikscube/cam_K.txt",
-    f"{CODE_DIR}/../data/rubikscube/masks/1712769756892.png"  # HACK!
+    f"{CODE_DIR}/../data/rubikscube/masks/1712769756892.png",  # HACK!
 )
 
 
@@ -46,7 +46,13 @@ def pose_inference(data: RGBDData):
         return {"pose": pose.tolist()}
     except Exception as e:
         import logging
+
         logging.exception("Failure")
         raise HTTPException(
             status_code=400, detail=f"Failed to process capture: {str(e)}"
         )
+
+
+@app.get("/ping")
+def ping():
+    return {"message": "pong"}
