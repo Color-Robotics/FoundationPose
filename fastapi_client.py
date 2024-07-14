@@ -1,9 +1,8 @@
 import argparse
 import glob
 import os
-import base64
-import io
 import requests
+import time
 from typing import List
 
 from PIL import Image
@@ -37,9 +36,11 @@ def main():
         depth_image = rgb_image.replace("rgb", "depth")
         rgb = encode_image_to_list(rgb_image)
         depth = encode_image_to_list(depth_image)
+        send_time = time.time()
         response = send_image_to_endpoint(rgb, depth)
+        latency = time.time() - send_time
         # Should get back a pose (3x3 matrix)
-        print(f"For image {rgb_image}, pose: {response.json()}")
+        print(f"[{latency:.3f}s] For image {rgb_image}, pose: {response.json()}")
         import pdb
 
         pdb.set_trace()

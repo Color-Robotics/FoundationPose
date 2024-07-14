@@ -10,6 +10,7 @@ import os
 import argparse
 import logging
 import glob
+import time
 from typing import Optional
 
 import trimesh
@@ -114,6 +115,7 @@ class FoundationPoseStream:
 
     def detect(self, image_data, depth_data) -> Optional[np.ndarray]:
         logging.info(f"Processing image: {self.image_counter}")
+        start_time = time.time()
         if not self.has_mask:
             # HACK
             # Get a mask for the object
@@ -137,6 +139,9 @@ class FoundationPoseStream:
                 K=self.K,
                 iteration=self.track_refine_iter,
             )
+        duration = time.time() - start_time
+        logging.info(f"Processing image took {duration:.3f} s")
+        self.image_counter += 1
         return pose
 
 
