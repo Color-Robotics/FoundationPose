@@ -35,14 +35,14 @@ def main():
     for rgb_image in glob.glob(os.path.join(args.data_dir, "rgb", "*.png")):
         # V hacky
         depth_image = rgb_image.replace("rgb", "depth")
-        import pdb
-
-        pdb.set_trace()
         rgb = encode_image_to_list(rgb_image)
         depth = encode_image_to_list(depth_image)
         response = send_image_to_endpoint(rgb, depth)
         # Should get back a pose (3x3 matrix)
         print(f"For image {rgb_image}, pose: {response.json()}")
+        import pdb
+
+        pdb.set_trace()
 
 
 if __name__ == "__main__":

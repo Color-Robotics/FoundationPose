@@ -119,7 +119,7 @@ class FoundationPoseStream:
             # Get a mask for the object
             # Need to update this to use the mask model
             mask = self.get_mask(image_data)
-            if not mask:
+            if mask is None:
                 logging.error("Failed to get mask.")
                 return
             self.has_mask = True
