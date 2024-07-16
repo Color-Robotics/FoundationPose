@@ -64,8 +64,16 @@ def pose_inference(data: RGBDData):
         rgb_shape = tuple(data.rgb_shape)
         depth_shape = tuple(data.depth_shape)
 
-        image_data = np.frombuffer(bytes(data.rgb), dtype=np.uint8).reshape(rgb_shape)
-        depth_data = np.frombuffer(bytes(data.depth), dtype=np.uint8).reshape(depth_shape)
+        # image_data = np.frombuffer(
+        #     bytes(data.rgb),
+        #     dtype=np.uint8,
+        # ).reshape(rgb_shape)
+        # depth_data = np.frombuffer(
+        #     bytes(data.depth),
+        #     dtype=np.uint8,
+        # ).reshape(depth_shape)
+        image_data = np.array(data.rgb)
+        depth_data = np.array(data.depth)
         send_time = time.time()
         print(f"post array sizing time: {send_time:.3f}")
         latency = send_time - start_time
