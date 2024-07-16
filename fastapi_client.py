@@ -6,16 +6,42 @@ import requests
 import time
 from typing import List, Optional
 
-from PIL import Image
+import tkinter as tk
+from PIL import Image, ImageTk
 import numpy as np
 
 logging.basicConfig(level=logging.INFO)
+
+
+# Create the main window
+root = tk.Tk()
+root.title("Image Viewer")
+
+# Initial setup for the image label
+image_label = tk.Label(root)
+image_label.pack()
+
+
+def draw_pose_on_image(rgb_list, pose):
+    rgb = np.array(rgb_list, dtype=np.uint8)
+    img = Image.fromarray(rgb)
+    img_tk = ImageTk.PhotoImage(image=img)
+    image_label.config(image=img_tk)
+    image_label.image = img_tk
 
 
 def encode_image_to_list(image_fn):
     # Encode the image to bytes using np.array().tobytes()
     image = np.array(Image.open(image_fn))
     return image.tolist()
+
+
+def get_mesh_info(
+    session: requests.Session,
+    url: str = "http://127.0.0.1:8000/rubikscube/mesh_info",
+):
+    data = session.get(url)
+    logging.info(f"Data: {data}")
 
 
 def send_image_to_endpoint(
@@ -43,6 +69,7 @@ def main():
 
     session = requests.Session()
     session.get("http://127.0.0.1:8000/ping")
+    mesh_info = get_mesh_info(session)
 
     # Send a POST request to the /api/run-pose-estimation endpoint
     for rgb_image in glob.glob(os.path.join(args.data_dir, "rgb", "*.png")):
@@ -58,6 +85,9 @@ def main():
         import pdb
 
         pdb.set_trace()
+        draw_pose_on_image(rgb, response.json()["pose"])
+        root.update_idletasks()
+        root.update()
 
 
 if __name__ == "__main__":

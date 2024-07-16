@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from fastapi.responses import HTMLResponse
 import pydantic
 import numpy as np
+import logging
 
 from run_color_demo import FoundationPoseStream
 import run_color_demo
@@ -35,6 +36,21 @@ class RGBDData(pydantic.BaseModel):
     depth: list
 
 
+@app.get("/rubikscube/mesh_info")
+def mesh_info():
+    try:
+        return {
+            "to_origin": RUBIKS_CUBE_DETECTOR.to_origin.tolist(),
+            "bbox": RUBIKS_CUBE_DETECTOR.bbox.tolist(),
+            "k": RUBIKS_CUBE_DETECTOR.K.tolist(),
+        }
+    except Exception as e:
+        logging.exception("Failed to get mesh info")
+        raise HTTPException(
+            status_code=400, detail=f"Failed to get mesh info: {str(e)}"
+        )
+
+
 @app.post("/rubikscube/inference")
 def pose_inference(data: RGBDData):
     try:
@@ -45,7 +61,6 @@ def pose_inference(data: RGBDData):
 
         return {"pose": pose.tolist()}
     except Exception as e:
-        import logging
 
         logging.exception("Failure")
         raise HTTPException(
