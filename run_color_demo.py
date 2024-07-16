@@ -176,7 +176,7 @@ def main() -> None:
         video_dir=args.test_scene_dir, shorter_side=None, zfar=np.inf
     )
     debug_dir = f"{CODE_DIR}/debug"
-    debug = 1
+    debug = args.debug
 
     for i in range(len(reader.color_files)):
         logging.info(f"i:{i}")
