@@ -180,8 +180,8 @@ def main() -> None:
 
     for i in range(len(reader.color_files)):
         logging.info(f"i:{i}")
-        color = reader.get_raw_color(i)
-        depth = reader.get_raw_depth(i)
+        color = reader.get_color_raw(i)
+        depth = reader.get_depth_raw(i)
         pose = foundation_pose_stream.detect(color, depth)
 
         os.makedirs(f"{debug_dir}/ob_in_cam", exist_ok=True)
