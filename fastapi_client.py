@@ -53,7 +53,12 @@ def send_image_to_endpoint(
     # Assume a tunnel is built to the FastAPI server.
     url = "http://127.0.0.1:8000/rubikscube/inference"
     headers = {"Content-Type": "application/json"}
-    data = {"rgb": rgb, "depth": depth}
+    data = {
+        "rgb": rgb,
+        "depth": depth,
+        "rgb_shape": rgb.shape,
+        "depth_shape": depth.shape,
+    }
     if session:
         response = session.post(url, json=data, headers=headers)
         logging.info("using the existing session")

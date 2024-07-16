@@ -35,6 +35,8 @@ class RGBDData(pydantic.BaseModel):
 
     rgb: list
     depth: list
+    rgb_shape: list
+    depth_shape: list
 
 
 @app.get("/rubikscube/mesh_info")
