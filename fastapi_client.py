@@ -1,5 +1,6 @@
 import argparse
 import glob
+import logging
 import os
 import requests
 import time
@@ -7,6 +8,8 @@ from typing import List, Optional
 
 from PIL import Image
 import numpy as np
+
+logging.basicConfig(level=logging.INFO)
 
 
 def encode_image_to_list(image_fn):
@@ -26,6 +29,7 @@ def send_image_to_endpoint(
     data = {"rgb": rgb, "depth": depth}
     if session:
         response = session.post(url, json=data, headers=headers)
+        logging.info("using the existing session")
     else:
         response = requests.post(url, json=data, headers=headers)
     return response
@@ -38,7 +42,7 @@ def main():
     args = parser.parse_args()
 
     session = requests.Session()
-    session.get("/ping")
+    session.get("http://127.0.0.1:8000/ping")
 
     # Send a POST request to the /api/run-pose-estimation endpoint
     for rgb_image in glob.glob(os.path.join(args.data_dir, "rgb", "*.png")):
