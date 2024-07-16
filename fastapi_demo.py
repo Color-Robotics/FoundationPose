@@ -9,6 +9,7 @@ import logging
 
 from run_color_demo import FoundationPoseStream
 import run_color_demo
+import time
 
 CODE_DIR = run_color_demo.CODE_DIR
 
@@ -34,6 +35,8 @@ class RGBDData(pydantic.BaseModel):
 
     rgb: list
     depth: list
+    rgb_shape: list
+    depth_shape: list
 
 
 @app.get("/rubikscube/mesh_info")
@@ -54,11 +57,26 @@ def mesh_info():
 @app.post("/rubikscube/inference")
 def pose_inference(data: RGBDData):
     try:
-        image_data = np.array(data.rgb, dtype=np.uint8)
-        depth_data = np.array(data.depth, dtype=np.uint8)
-        # process the image
+        start_time = time.time()
+        print(f"inference time: {start_time:.3f}")
+
+        # Use the provided shape information
+        rgb_shape = tuple(data.rgb_shape)
+        depth_shape = tuple(data.depth_shape)
+
+        image_data = np.frombuffer(bytes(data.rgb), dtype=np.uint8).reshape(rgb_shape)
+        depth_data = np.frombuffer(bytes(data.depth), dtype=np.uint8).reshape(depth_shape)
+        send_time = time.time()
+        print(f"post array sizing time: {send_time:.3f}")
+        latency = send_time - start_time
+        print(f"[post array sizing latency: {latency:.3f}s]")
+
         pose = RUBIKS_CUBE_DETECTOR.detect(image_data, depth_data)
 
+        latency = time.time() - send_time
+        print(f"[pose latency: {latency:.3f}s]")
+        start_time = time.time()
+        print(f"pose return time: {start_time:.3f}s")
         return {"pose": pose.tolist()}
     except Exception as e:
 

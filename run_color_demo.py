@@ -114,6 +114,8 @@ class FoundationPoseStream:
             raise ValueError("No mask available to return.")
 
     def detect(self, image_data, depth_data) -> Optional[np.ndarray]:
+        start_time = time.time()
+        print(f"processing time: {start_time:.3f}s")
         logging.info(f"Processing image: {self.image_counter}")
         start_time = time.time()
         if not self.has_mask:
