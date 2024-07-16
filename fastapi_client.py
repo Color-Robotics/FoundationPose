@@ -41,8 +41,8 @@ def draw_pose_on_image(rgb_list, pose, mesh_info):
     for line in box_points:
         img_draw = ImageDraw.Draw(img)
         img_draw.line(
-            # line.reshape(4),
-            [0, 0, 200, 200],
+            line.reshape(4),
+            # [0, 0, 200, 200],
             width=2,
             fill="red",
         )
