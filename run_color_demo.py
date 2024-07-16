@@ -78,8 +78,6 @@ class FoundationPoseStream:
         logging.info("estimator initialization done")
 
         self.image_counter = 0
-        # Flag to determine if we have a mask used for tracking.
-        self.has_mask = False
         # I am going to hardcode this.  I don't know what impact decreasing/increasing resolution would have on results?
         # If the results don't change much, might make sense to always resize to the same dimensions.
         self.W = 640
@@ -118,7 +116,7 @@ class FoundationPoseStream:
         print(f"processing time: {start_time:.3f}s")
         logging.info(f"Processing image: {self.image_counter}")
         start_time = time.time()
-        if not self.has_mask:
+        if self.est.pose_last is None:
             # HACK
             # Get a mask for the object
             # Need to update this to use the mask model
@@ -126,7 +124,6 @@ class FoundationPoseStream:
             if mask is None:
                 logging.error("Failed to get mask.")
                 return
-            self.has_mask = True
             pose = self.est.register(
                 K=self.K,
                 rgb=image_data,
