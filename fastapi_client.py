@@ -22,7 +22,7 @@ image_label = tk.Label(root)
 image_label.pack()
 
 
-def draw_pose_on_image(rgb_list, pose):
+def draw_pose_on_image(rgb_list, pose, mesh_info):
     rgb = np.array(rgb_list, dtype=np.uint8)
     img = Image.fromarray(rgb)
     img_tk = ImageTk.PhotoImage(image=img)
@@ -41,7 +41,8 @@ def get_mesh_info(
     url: str = "http://127.0.0.1:8000/rubikscube/mesh_info",
 ):
     data = session.get(url)
-    logging.info(f"Data: {data}")
+    logging.info(f"Data: {data.json()}")
+    return data.json()
 
 
 def send_image_to_endpoint(
@@ -85,7 +86,7 @@ def main():
         import pdb
 
         pdb.set_trace()
-        draw_pose_on_image(rgb, response.json()["pose"])
+        draw_pose_on_image(rgb, response.json()["pose"], mesh_info)
         root.update_idletasks()
         root.update()
 
