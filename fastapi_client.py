@@ -38,23 +38,23 @@ def draw_pose_on_image(rgb_list, pose, mesh_info):
     )
     import pdb; pdb.set_trace()
     # For each pair of points, draw a line
-    for i in range(4):
-        for j in range(i + 1, 4):
-            img_draw = ImageDraw.Draw(img)
-            img_draw.line(
-                [box_points[i][0], box_points[j][0]],
-                [box_points[i][1], box_points[j][1]],
-                width=2,
-            )
+    for line in box_points:
+        img_draw = ImageDraw.Draw(img)
+        img_draw.line(
+            # line.reshape(4),
+            [0, 0, 200, 200],
+            width=2,
+            fill="red",
+        )
     img_tk = ImageTk.PhotoImage(image=img)
     image_label.config(image=img_tk)
     image_label.image = img_tk
 
+def load_image(image_fn):
+    return np.array(Image.open(image_fn))
 
-def encode_image_to_list(image_fn):
-    # Encode the image to bytes using np.array().tobytes()
-    image = np.array(Image.open(image_fn))
-    return image.tolist()
+def encode_image_to_list(image_arr):
+    return image_arr.tolist()
 
 
 def get_mesh_info(
@@ -99,11 +99,15 @@ def main():
     mesh_info = get_mesh_info(session)
 
     # Send a POST request to the /api/run-pose-estimation endpoint
-    for rgb_image in glob.glob(os.path.join(args.data_dir, "rgb", "*.png")):
+    files = glob.glob(os.path.join(args.data_dir, "rgb", "*.png"))
+    files.sort()
+    for rgb_image in files:
         # V hacky
         depth_image = rgb_image.replace("rgb", "depth")
-        rgb = encode_image_to_list(rgb_image)
-        depth = encode_image_to_list(depth_image)
+        rgb_arr = load_image(rgb_image)
+        rgb = encode_image_to_list(rgb_arr)
+        depth_arr = load_image(depth_image) / 1e3
+        depth = encode_image_to_list(depth_arr)
         send_time = time.time()
         response = send_image_to_endpoint(rgb, depth, session)
         latency = time.time() - send_time
@@ -112,7 +116,7 @@ def main():
         if not response.ok:
             logging.error(f"Failed to get pose for {rgb_image}")
             continue
-        draw_pose_on_image(rgb, response.json()["pose"], mesh_info)
+        draw_pose_on_image(rgb, np.array(response.json()["pose"]), mesh_info)
         root.update_idletasks()
         root.update()
 
