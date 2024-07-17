@@ -1,7 +1,7 @@
 import base64
 
 import fastapi
-from fastapi import HTTPException
+from fastapi import HTTPException, File, UploadFile
 from fastapi.responses import HTMLResponse
 import pydantic
 import numpy as np
@@ -55,25 +55,29 @@ def mesh_info():
 
 
 @app.post("/rubikscube/inference")
-def pose_inference(data: RGBDData):
+async def pose_inference(
+    rgb: UploadFile = File(...),
+    depth: UploadFile = File(...),
+    rgb_shape: str = fastapi.Form(...),
+    depth_shape: str = fastapi.Form(...),
+):
     try:
         start_time = time.time()
         print(f"inference time: {start_time:.3f}")
+        # Parse shape strings to tuples
+        rgb_shape = tuple(map(int, rgb_shape.split(",")))
+        depth_shape = tuple(map(int, depth_shape.split(",")))
 
-        # Use the provided shape information
-        rgb_shape = tuple(data.rgb_shape)
-        depth_shape = tuple(data.depth_shape)
+        # Read binary data
+        rgb_data = await rgb.read()
+        depth_data = await depth.read()
 
-        # image_data = np.frombuffer(
-        #     bytes(data.rgb),
-        #     dtype=np.uint8,
-        # ).reshape(rgb_shape)
-        # depth_data = np.frombuffer(
-        #     bytes(data.depth),
-        #     dtype=np.uint8,
-        # ).reshape(depth_shape)
-        image_data = np.array(data.rgb)
-        depth_data = np.array(data.depth)
+        # Use np.frombuffer for faster conversion
+        image_data = np.frombuffer(rgb_data, dtype=np.uint8).reshape(rgb_shape)
+        depth_data = np.frombuffer(depth_data, dtype=np.uint8).reshape(depth_shape)
+
+        # image_data = np.array(data.rgb, dtype=np.uint8)
+        # depth_data = np.array(data.depth, dtype=np.uint8)
         send_time = time.time()
         print(f"post array sizing time: {send_time:.3f}")
         latency = send_time - start_time
