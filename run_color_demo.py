@@ -8,6 +8,7 @@
 
 import os
 import argparse
+import datetime
 import logging
 import glob
 import time
@@ -39,22 +40,20 @@ class FoundationPoseStream:
         mesh_file: str,
         cam_k_file: str,
         mask_0_file: Optional[str] = None,
+        debug=2,
     ):
         """Initialize the pose estimation pipeline."""
         self.mesh_file = mesh_file
         self.K = np.loadtxt(cam_k_file).reshape(3, 3)
+        self.debug = debug
+        session_dt_str = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
+        debug_dir = f"{CODE_DIR}/debug/{session_dt_str}"
 
         if mask_0_file:
             # There is some code for processing the masks maybe related to RGB masks.
             self.mask_0 = cv2.imread(mask_0_file, cv2.IMREAD_UNCHANGED)
         else:
             self.mask_0 = None
-        debug_dir = f"{CODE_DIR}/debug"
-        debug = 1
-        # TODO: Do this better.
-        os.system(
-            f"rm -rf {debug_dir}/* && mkdir -p {debug_dir}/track_vis {debug_dir}/ob_in_cam"
-        )
         Utils.set_seed(0)
 
         # This stuff should probably be in a DB for faster access.
@@ -90,8 +89,22 @@ class FoundationPoseStream:
         self.est_refine_iter = 5
         self.track_refine_iter = 2
 
+        # Setup debug data collection
+        if self.debug >= 1:
+            session_dt_str = datetime.datetime.now(datetime.UTC).strftime(
+                "%Y%m%d_%H%M%S"
+            )
+            debug_dir = f"{CODE_DIR}/debug/{session_dt_str}"
+            os.makedirs(f"{debug_dir}/track_vis", exist_ok=True)
+            os.makedirs(f"{debug_dir}/ob_in_cam", exist_ok=True)
+            self.mesh = mesh
+
     def process_color_data(self, color: np.ndarray):
-        color = cv2.resize(color, (self.W, self.H), interpolation=cv2.INTER_NEAREST)
+        color = cv2.resize(
+            color,
+            (self.W, self.H),
+            interpolation=cv2.INTER_NEAREST,
+        )
         return color
 
     def process_depth_data(self, depth: np.ndarray):
@@ -99,7 +112,11 @@ class FoundationPoseStream:
 
         Note: Depth should be in mm.
         """
-        depth = cv2.resize(depth, (self.W, self.H), interpolation=cv2.INTER_NEAREST)
+        depth = cv2.resize(
+            depth,
+            (self.W, self.H),
+            interpolation=cv2.INTER_NEAREST,
+        )
         depth[(depth < 0.1) | (depth >= self.zfar)] = 0
         return depth
 
@@ -131,6 +148,14 @@ class FoundationPoseStream:
                 ob_mask=mask,
                 iteration=self.est_refine_iter,
             )
+            # if self.debug >= 3:
+            #     m = self.mesh.copy()
+            #     m.apply_transform(pose)
+            #     m.export(f"{self.debug_dir}/model_tf.obj")
+            #     xyz_map = depth2xyzmap(depth, reader.K)
+            #     valid = depth >= 0.1
+            #     pcd = toOpen3dCloud(xyz_map[valid], color[valid])
+            #     o3d.io.write_point_cloud(f"{debug_dir}/scene_complete.ply", pcd)
         else:
             pose = self.est.track_one(
                 rgb=image_data,
@@ -140,6 +165,33 @@ class FoundationPoseStream:
             )
         duration = time.time() - start_time
         logging.info(f"Processing image took {duration:.3f} s")
+        if self.debug >= 2:
+            debug_start = time.time()
+            center_pose = pose @ np.linalg.inv(self.to_origin)
+            vis = Utils.draw_posed_3d_box(
+                self.K,
+                img=image_data,
+                ob_in_cam=center_pose,
+                bbox=self.bbox,
+            )
+            vis = Utils.draw_xyz_axis(
+                vis,
+                ob_in_cam=center_pose,
+                scale=0.1,
+                K=self.K,
+                thickness=3,
+                transparency=0,
+                is_input_rgb=True,
+            )
+            inference_str = datetime.datetime.now(datetime.UTC).strftime(
+                "%Y%m%d_%H%M%S"
+            )
+            imageio.imwrite(
+                f"{self.debug_dir}/track_vis/{inference_str}.png",
+                vis,
+            )
+            debug_duration = time.time() - debug_start
+            logging.info(f"Debugging took {debug_duration:.3f} s")
         self.image_counter += 1
         return pose
 

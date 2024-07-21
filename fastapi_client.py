@@ -11,8 +11,10 @@ from PIL import Image, ImageTk, ImageDraw
 import numpy as np
 
 from dotenv import load_dotenv
+
 load_dotenv()
 import sys
+
 sys.path.append(os.getenv("COLOR_MIDDLEWARE_UTILS_PATH"))
 import pose_utils
 
@@ -36,7 +38,9 @@ def draw_pose_on_image(rgb_list, pose, mesh_info):
         np.array(mesh_info["bbox"]),
         K=np.array(mesh_info["k"]),
     )
-    import pdb; pdb.set_trace()
+    import pdb
+
+    pdb.set_trace()
     # For each pair of points, draw a line
     for line in box_points:
         img_draw = ImageDraw.Draw(img)
@@ -50,8 +54,10 @@ def draw_pose_on_image(rgb_list, pose, mesh_info):
     image_label.config(image=img_tk)
     image_label.image = img_tk
 
+
 def load_image(image_fn):
     return np.array(Image.open(image_fn))
+
 
 def encode_image_to_list(image_arr):
     return image_arr.tolist()
@@ -116,9 +122,9 @@ def main():
         if not response.ok:
             logging.error(f"Failed to get pose for {rgb_image}")
             continue
-        draw_pose_on_image(rgb, np.array(response.json()["pose"]), mesh_info)
-        root.update_idletasks()
-        root.update()
+        # draw_pose_on_image(rgb, np.array(response.json()["pose"]), mesh_info)
+        # root.update_idletasks()
+        # root.update()
 
 
 if __name__ == "__main__":
